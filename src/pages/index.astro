@@ -1,11 +1,39 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import Slideshow from '../components/Slideshow.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import slide1 from '../assets/welcome-slides/slide1.jpg';
+import slide2 from '../assets/welcome-slides/slide2.jpg';
+import slide3 from '../assets/welcome-slides/slide3.jpg';
+import slide4 from '../assets/welcome-slides/slide4.jpg';
+import slide5 from '../assets/welcome-slides/slide5.jpg';
+import slide6 from '../assets/welcome-slides/slide6.jpg';
+import slide7 from '../assets/welcome-slides/slide7.jpg';
+
+const slides = [
+  { src: slide1, alt: 'Bild 1' },
+  { src: slide2, alt: 'Bild 2' },
+  { src: slide3, alt: 'Bild 3' },
+  { src: slide4, alt: 'Bild 4' },
+  { src: slide5, alt: 'Bild 5' },
+  { src: slide6, alt: 'Bild 6' },
+  { src: slide7, alt: 'Bild 7' },
+];
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Home">
+	<h1>Welcome to Pfotenclub</h1>
+	<h2>Where your dreams might come true!</h2>
+	<Slideshow images={slides} interval={4000} />
 </Layout>
+
+<style>
+	
+	h1 {
+		margin-bottom: auto;
+	}
+
+	h2 {
+		margin-top: 0rem;
+	}
+</style>
