@@ -1,0 +1,88 @@
+---
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+
+interface Props {
+	title?: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pfotenclub{title ? ` | ${title}` : ''}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Fredoka:wght@400;600&display=swap" rel="stylesheet" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<slot />
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style is:global>
+	:root {
+		--color-primary: #e8eaf0;
+		--color-secondary: #9da8d4;
+	}
+
+	html,
+	body {
+		margin: 0;
+		width: 100%;
+		min-height: 100vh;
+	}
+
+	body {
+		color: var(--color-secondary);
+		background: radial-gradient(ellipse at center, #131b4a 0%, #0a0f2e 50%, #060a18 100%);
+		background-attachment: fixed;
+		display: flex;
+		flex-direction: column;
+		font: 400 1rem 'Nunito', sans-serif;
+	}
+
+	main {
+		flex: 1;
+	}
+
+	h1 {
+		font-size: 3rem;
+		color: var(--color-primary);
+		text-align: center;
+		margin-top: 2rem;
+		margin-bottom: 0;
+	}
+
+	h2 {
+		font-size: 1.5rem;
+		color: var(--color-primary);
+		text-align: center;
+		margin-top: 0.5rem;
+	}
+
+	h3 {
+		font-size: 1rem;
+		color: var(--color-primary);
+		text-align: center;
+		margin-top: 0.5rem;
+	}
+
+	p {
+		font-size: 1rem;
+		line-height: 1.5;
+		margin: 1rem auto;
+		max-width: 800px;
+	}
+</style>
