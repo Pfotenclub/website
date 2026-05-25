@@ -4,7 +4,7 @@ This is the source code for the Pfotenclub website, built using [Astro](https://
 
 ## 🚀 Getting Started
 
-This is just the source code for the website. To view the website, you can visit [pfotenclub.de](https://pfotenclub.de).
+This is just the source code for the website. To view the website, you can visit [pfotenclub.eu](https://pfotenclub.eu).
 Want to run the website locally? Follow these steps:
 
 1. Don't.
