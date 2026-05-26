@@ -55,6 +55,11 @@ const { title } = Astro.props;
 
 	main {
 		flex: 1;
+		max-width: 1100px;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0 1.5rem;
+		box-sizing: border-box;
 	}
 
 	h1 {
@@ -86,3 +91,39 @@ const { title } = Astro.props;
 		max-width: 800px;
 	}
 </style>
+
+<style is:global>
+  .fabaxi-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(2rem);
+    background: #1e2a5e;
+    color: #e8eaf0;
+    border: 1px solid rgba(157,168,212,0.3);
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+  }
+  .fabaxi-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+
+<script>
+  if (!document.cookie.split(';').some(c => c.trim().startsWith('fabaxi='))) {
+    document.cookie = 'fabaxi=🍪; path=/; max-age=31536000; SameSite=Lax';
+    const toast = document.createElement('div');
+    toast.className = 'fabaxi-toast';
+    toast.textContent = '🍪 Fabaxi has given you a cookie!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 50);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3500);
+  }
+</script>
