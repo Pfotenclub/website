@@ -1,8 +1,249 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const avatarImports = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/members/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+
+function getAvatar(file: string | null): ImageMetadata | null {
+  if (!file) return null;
+  for (const [path, mod] of Object.entries(avatarImports)) {
+    const basename = path.split('/').pop()?.replace(/\.[^.]+$/, '');
+    if (basename === file) return mod.default;
+  }
+  return null;
+}
+
+const members = [
+  {
+    name: "Fabaxi",
+    role: "Cult Leader",
+    category: "cult-leader",
+    description: "Our god we worship. He is the reason we exist and the source of all our power. Likes to give cookies.",
+    avatarFile: "fabaxi",
+  },
+  {
+    name: "Wolfiii",
+    role: "Cult Leader",
+    category: "cult-leader",
+    description: "Co-founder of the club and cult leader. Responsible for all major decisions and the overall direction of the club.",
+    avatarFile: "wolfiii",
+  },
+  {
+    name: "Muffin",
+    role: "Cult Leader",
+    category: "cult-leader",
+    description: "Co-founder and cult leader. Handles all the rituals and ceremonies, ensuring our traditions are upheld.",
+    avatarFile: "muffin",
+  },
+  {
+    name: "Kaani",
+    role: "Burgeramt",
+    category: "burgeramt",
+    description: "The reason why it's called the Burger\"amt\". Responsible for all burgers and the doorman of the club.",
+    avatarFile: "kaani",
+  },
+  {
+    name: "Nugget",
+    role: "Burgeramt",
+    category: "burgeramt",
+    description: "The other reason why it's called the Burger\"amt\". Creator of our VRChat Pfotenclub world and the main chef of the club. Also Unity God.",
+    avatarFile: "nugget",
+  },
+  {
+    name: "ThePinkPilot",
+    role: "Burgeramt",
+    category: "burgeramt",
+    description: "The third reason why it's called the Burger\"amt\". Organizer of our offline events and the main supplier of our sauces.",
+    avatarFile: "pinkpilot",
+  },
+  {
+    name: "TheNicked",
+    role: "Member",
+    category: "member",
+    description: "One of our most active members. Always there to help out and very wholesome. Beep Boop.",
+    avatarFile: "nicked",
+  },
+  {
+    name: "Teddy",
+    role: "Member",
+    category: "member",
+    description: "Want a teddy bear to cuddle? He is your guy and will cuddle the hell out of you. Just make sure to give him a cookie first.",
+    avatarFile: "teddy",
+  },
+  {
+    name: "Valiuwu",
+    role: "Member",
+    category: "member",
+    description: "Just a silly fox in the interwebs :3 Loves to be called cute and is very cute indeed. Member of #Paws and a little Paw slut.",
+    avatarFile: "vali",
+  },
+  {
+    name: "GrimTenebris",
+    role: "Member",
+    category: "member",
+    description: "A newer member but already a beloved one. Makes our VRChat avatars and also an Unity God.",
+    avatarFile: "grimtenebris",
+  },
+];
+
+const categories = [
+  { id: "all", label: "All" },
+  { id: "cult-leader", label: "Cult Leader" },
+  { id: "burgeramt", label: "Burgeramt" },
+  { id: "member", label: "Members" },
+];
+
+const membersWithAvatars = members.map(m => ({
+  ...m,
+  avatarSrc: getAvatar(m.avatarFile),
+}));
 ---
+
 <Layout title="Members">
-    <h2>Members</h2>
-    <p>Here you can find information about our members and their contributions to the Pfotenclub community.</p>
-    <h3>Work In Progress :)</h3>
+  <h2>Members</h2>
+  <p>Choose a category to learn more about our members.</p>
+
+  <div class="filter-bar">
+    {categories.map((cat) => (
+      <button
+        class="filter-btn"
+        data-category={cat.id}
+        aria-pressed={cat.id === "all" ? "true" : "false"}
+      >
+        {cat.label}
+      </button>
+    ))}
+  </div>
+
+  <div class="members-grid">
+    {membersWithAvatars.map((m) => (
+      <div class="member-card" data-category={m.category}>
+        <div class="member-avatar-wrap">
+          {m.avatarSrc
+            ? <Image src={m.avatarSrc} alt={m.name} width={64} height={64} class="member-avatar-img" loading="eager" />
+            : <span class="member-avatar-fallback">{m.name[0]}</span>
+          }
+        </div>
+        <div class="member-info">
+          <h3>{m.name}</h3>
+          <span class="member-role">{m.role}</span>
+          <p>{m.description}</p>
+        </div>
+      </div>
+    ))}
+  </div>
 </Layout>
+
+<style>
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .filter-btn {
+    padding: 0.4rem 1rem;
+    border: 2px solid var(--accent, #888);
+    background: transparent;
+    color: inherit;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .filter-btn[aria-pressed="true"],
+  .filter-btn:hover {
+    background: var(--accent, #888);
+    color: #fff;
+  }
+
+  .members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .member-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid rgba(128,128,128,0.3);
+    border-radius: 0.75rem;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .member-card.hidden {
+    display: none;
+  }
+
+  .member-avatar-wrap {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+  }
+
+  .member-avatar-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .member-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent, #888);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .member-info h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+  }
+
+  .member-role {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .member-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.member-card');
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const selected = btn.dataset.category!;
+
+      buttons.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+
+      cards.forEach((card) => {
+        const match = selected === 'all' || card.dataset.category === selected;
+        card.classList.toggle('hidden', !match);
+      });
+    });
+  });
+</script>
