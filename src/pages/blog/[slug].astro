@@ -1,0 +1,99 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post: CollectionEntry<'blog'>) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props as { post: CollectionEntry<'blog'> };
+const { Content } = await render(post);
+---
+
+<Layout title={post.data.title}>
+  <article class="post">
+    <header>
+      <a href="/blog" class="back">← Back to overview</a>
+      <time>{post.data.date.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</time>
+      <h1>{post.data.title}</h1>
+      {post.data.author && <p class="author">from {post.data.author}</p>}
+    </header>
+    <div class="content">
+      <Content />
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .post {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .back {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    font-family: 'Fredoka', sans-serif;
+    text-decoration: none;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .back:hover {
+    opacity: 1;
+  }
+
+  time {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.5rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .author {
+    margin: 0;
+    opacity: 0.6;
+    font-size: 0.9rem;
+  }
+
+  .content {
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  .content :global(h2) {
+    font-family: 'Fredoka', sans-serif;
+    margin-top: 2rem;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1.2rem;
+  }
+
+  .content :global(a) {
+    color: #a8c0ff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+
+  .content :global(a:hover) {
+    color: var(--color-primary);
+  }
+</style>
