@@ -68,25 +68,25 @@ const members = [
     avatarFile: "nicked",
   },
   {
-    name: "Teddy",
-    role: "Member",
-    category: "member",
-    description: "Want a teddy bear to cuddle? He is your guy and will cuddle the hell out of you. Just make sure to give him a cookie first.",
-    avatarFile: "teddy",
-  },
-  {
-    name: "Valiuwu",
-    role: "Member",
-    category: "member",
-    description: "Just a silly fox in the interwebs :3 Loves to be called cute and is very cute indeed. Member of #Paws and a little Paw slut.",
-    avatarFile: "vali",
-  },
-  {
     name: "GrimTenebris",
     role: "Member",
     category: "member",
     description: "A newer member but already a beloved one. Makes our VRChat avatars and also an Unity God.",
     avatarFile: "grimtenebris",
+  },
+  {
+    name: "SetoxFoxy",
+    role: "Member",
+    category: "member",
+    description: "Accountant and recorder of the Pfotenclub not e.V. Never there to keep track of our finances.",
+    avatarFile: "setox",
+  },
+  {
+    name: "TinyDrusky",
+    role: "Member",
+    category: "member",
+    description: "Maow.",
+    avatarFile: "drusky",
   },
   {
     name: "Slush",
@@ -96,12 +96,33 @@ const members = [
     avatarFile: "slush",
   },
   {
+    name: "Teddy",
+    role: "Member",
+    category: "member",
+    description: "Want a teddy bear to cuddle? He is your guy and will cuddle the hell out of you. Just make sure to give him a cookie first.",
+    avatarFile: "teddy",
+  },
+  {
+    name: "Bowslime",
+    role: "Member",
+    category: "member",
+    description: "Cuddle slut by heart. Loves to fall asleep in VRChat.",
+    avatarFile: "bowslime",
+  },
+  {
+    name: "Valiuwu",
+    role: "Member",
+    category: "member",
+    description: "Just a silly fox in the interwebs :3 Loves to be called cute and is very cute indeed. Member of #Paws and a little Paw slut.",
+    avatarFile: "vali",
+  },
+  {
     name: "Fen",
     role: "Member",
     category: "member",
     description: "Used to have an Only Fens till 1984. But he wasnt a big fen of fens so things got too heated without a fen.",
     avatarFile: "fen",
-  },
+  },  
 ];
 
 const categories = [
@@ -134,11 +155,11 @@ const membersWithAvatars = members.map(m => ({
   </div>
 
   <div class="members-grid">
-    {membersWithAvatars.map((m) => (
+    {membersWithAvatars.map((m, i) => (
       <div class="member-card" data-category={m.category}>
         <div class="member-avatar-wrap">
           {m.avatarSrc
-            ? <Image src={m.avatarSrc} alt={m.name} width={64} height={64} class="member-avatar-img" loading="eager" />
+            ? <Image src={m.avatarSrc} alt={m.name} width={64} height={64} class="member-avatar-img" loading={i < 18 ? "eager" : "lazy"} />
             : <span class="member-avatar-fallback">{m.name[0]}</span>
           }
         </div>
