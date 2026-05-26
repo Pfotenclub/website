@@ -1,9 +1,176 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { Image, getImage } from "astro:assets";
+
+const imageFiles = import.meta.glob<{ default: ImageMetadata }>(
+  "../assets/gallery/*.{jpg,jpeg,png,gif,webp,avif}"
+);
+
+const images = await Promise.all(
+  Object.entries(imageFiles).map(async ([path, loader]) => {
+    const mod = await loader();
+    const filename = path.split("/").pop() ?? "";
+    const full = await getImage({ src: mod.default, format: "webp", quality: 90 });
+    return { src: mod.default, alt: filename, fullSrc: full.src };
+  })
+);
 ---
 
 <Layout title="Gallery">
-    <h2>Gallery</h2>
-    <p>Check out our latest photos and videos of our furry friends in action! From playful pups to majestic cats, our gallery is filled with heartwarming moments that capture the spirit of the Pfotenclub. Whether you're looking for inspiration or just want to brighten your day, our gallery has something for every animal lover.</p>
-    <h3>Work In Progress :) </h3>
+  <div class="gallery-container">
+    <h1>Gallery</h1>
+    {images.length === 0 ? (
+      <p class="empty">No images yet — check back soon!</p>
+    ) : (
+      <div class="grid">
+        {images.map((img, i) => (
+          <button class="item" data-index={i} data-full={img.fullSrc} aria-label={`Open image ${i + 1}`}>
+            <Image src={img.src} alt={img.alt} width={600} height={400} loading="eager" />
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+  </div>
 </Layout>
+
+<script>
+  const sources: string[] = [
+    ...document.querySelectorAll<HTMLButtonElement>('.item')
+  ].map(btn => btn.dataset.full ?? '');
+
+  const lightbox = document.getElementById('lightbox')!;
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
+  const closeBtn = document.getElementById('lightbox-close')!;
+
+  function open(index: number) {
+    lightboxImg.src = sources[index];
+    lightbox.classList.add('active');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    lightbox.classList.remove('active');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    lightboxImg.src = '';
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.item').forEach(btn => {
+    btn.addEventListener('click', () => open(Number(btn.dataset.index)));
+  });
+
+  closeBtn.addEventListener('click', close);
+
+  lightbox.addEventListener('click', e => {
+    if (e.target === lightbox) close();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
+  });
+
+  // Block right-click on all gallery images including lightbox
+  document.addEventListener('contextmenu', e => {
+    if (e.target instanceof HTMLImageElement && e.target.closest('.item, #lightbox')) {
+      e.preventDefault();
+    }
+  });
+</script>
+
+<style>
+  .gallery-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .item {
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(100, 140, 255, 0.15);
+    transition: border-color 0.2s, transform 0.2s;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .item:hover {
+    border-color: rgba(100, 140, 255, 0.5);
+    transform: scale(1.02);
+  }
+
+  .item img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .empty {
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox.active {
+    display: flex;
+  }
+
+  .lightbox img {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    line-height: 1;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+  }
+
+  .lightbox.active .lightbox-close {
+    opacity: 0.7;
+  }
+
+  .lightbox-close:hover {
+    opacity: 1 !important;
+  }
+</style>
