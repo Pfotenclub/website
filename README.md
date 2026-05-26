@@ -15,7 +15,7 @@ Want to run the website locally? Follow these steps:
 
 If you want to contribute to the website, please fork the repository and submit a pull request. We welcome contributions of all kinds, including bug fixes, new features, and improvements to the design.
 Please make sure to follow the existing code style and include tests for any new features or bug fixes.
-Any contributions that do not follow the code style or do not include tests may be rejected. @DiniskaWolfiii is the main maintainer of the project and will review all pull requests.
+Any contributions that do not follow the code style or do not include tests may be rejected. [@DiniskaWolfiii](https://github.com/DiniskaWolfiii) is the main maintainer of the project and will review all pull requests.
 
 ## 📄 License
 
