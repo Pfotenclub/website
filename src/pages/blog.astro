@@ -1,8 +1,94 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+const posts = (await getCollection('blog')).sort(
+  (a: CollectionEntry<'blog'>, b: CollectionEntry<'blog'>) => b.data.date.valueOf() - a.data.date.valueOf()
+);
 ---
 
 <Layout title="Blog & News">
-    <h2 style="text-align: center;">No news yet!</h2>
-    <h3 style="text-align: center;">Check back soon for updates!</h3>
+  <div class="blog-container">
+    <h1>Blog & News</h1>
+    <p>Welcome to our blog! Here you'll find the latest news and updates from our Pfotenclub!</p>
+    <p>Happy reading :)</p>
+    {posts.length === 0 ? (
+      <p class="empty">No news yet — check back soon!</p>
+    ) : (
+      <ul class="post-list">
+        {posts.map(post => (
+          <li>
+            <a href={`/blog/${post.id}`} class="post-card">
+              <time>{post.data.date.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</time>
+              <h2>{post.data.title}</h2>
+              <p>{post.data.description}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
 </Layout>
+
+<style>
+  .blog-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .post-card {
+    display: block;
+    padding: 1.5rem;
+    border: 1px solid rgba(100, 140, 255, 0.2);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    background: rgba(100, 140, 255, 0.05);
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .post-card:hover {
+    border-color: rgba(100, 140, 255, 0.5);
+    background: rgba(100, 140, 255, 0.1);
+  }
+
+  .post-card time {
+    font-size: 0.85rem;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .post-card h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .post-card p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 0.95rem;
+  }
+
+  .empty {
+    text-align: center;
+    opacity: 0.6;
+  }
+</style>
