@@ -110,6 +110,13 @@ const members = [
     avatarFile: "teddy",
   },
   {
+    name: "Wunderwolf",
+    role: "Member",
+    category: "member",
+    description: "A lone wolf in the 90s and samurai in mind. Since VRChat also cuddle addicted.",
+    avatarFile: "wunderwolf",
+  },
+  {
     name: "Bowslime",
     role: "Member",
     category: "member",
@@ -209,6 +216,7 @@ const membersWithAvatars = members.map(m => ({
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.25rem;
+    align-items: start;
   }
 
   .member-card {
@@ -250,6 +258,11 @@ const membersWithAvatars = members.map(m => ({
     font-size: 1.5rem;
     font-weight: bold;
     text-transform: uppercase;
+  }
+
+  .member-info {
+    flex: 1;
+    min-width: 0;
   }
 
   .member-info h3 {
