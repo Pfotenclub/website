@@ -11,7 +11,9 @@ const navLinks = [
 
 <header>
   <nav>
-    <a href="/" class="logo">Pfotenclub</a>
+    <a href="/" class="logo">
+      <img src="/logo.png" alt="Pfotenclub Logo" width="40" height="40" />
+      Pfotenclub</a>
     <button class="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
       <span></span>
       <span></span>
@@ -72,6 +74,9 @@ const navLinks = [
     font-weight: 600;
     text-decoration: none;
     color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
   }
 
   .nav-links {
