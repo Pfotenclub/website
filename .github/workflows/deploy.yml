@@ -43,4 +43,4 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "bash -lc 'pm2 restart pfotenclub --update-env 2>/dev/null || pm2 start /var/www/pfotenclub/server/entry.mjs --name pfotenclub --update-env'"
+            "source ~/.nvm/nvm.sh 2>/dev/null; source ~/.bashrc 2>/dev/null; pm2 restart pfotenclub --update-env 2>/dev/null || pm2 start /var/www/pfotenclub/server/entry.mjs --name pfotenclub --update-env"
