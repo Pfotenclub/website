@@ -20,16 +20,16 @@ interface OrderBody {
 export const POST: APIRoute = async ({ request, cookies }) => {
   const sessionCookie = cookies.get(SESSION_COOKIE)?.value;
   const session = sessionCookie
-    ? verifySessionCookie(sessionCookie, import.meta.env.SESSION_SECRET ?? '')
+    ? verifySessionCookie(sessionCookie, process.env.SESSION_SECRET ?? '')
     : null;
 
   if (!session?.isMember) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  const apiUrl  = import.meta.env.FABAXI_API_URL;
-  const apiKey  = import.meta.env.FABAXI_API_KEY;
-  const adminId = import.meta.env.DISCORD_ADMIN_USER_ID;
+  const apiUrl  = process.env.FABAXI_API_URL;
+  const apiKey  = process.env.FABAXI_API_KEY;
+  const adminId = process.env.DISCORD_ADMIN_USER_ID;
 
   if (!apiUrl || !apiKey || !adminId) {
     console.error('[order] Missing FABAXI_API_URL, FABAXI_API_KEY or DISCORD_ADMIN_USER_ID');
