@@ -1,14 +1,745 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { verifySessionCookie, SESSION_COOKIE } from "../lib/session";
+
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE)?.value;
+const session = sessionCookie
+  ? verifySessionCookie(sessionCookie, import.meta.env.SESSION_SECRET ?? '')
+  : null;
 ---
 
 <Layout title="Shop">
-    <h1>No.</h1>
+  {!session ? (
+    <div class="gate">
+      <h1>Pfotenclub Merchandise</h1>
+      <h3>Only for Pfotenclub Members!</h3>
+      <p>Here you can find exclusive merchandise for our members.</p>
+    </div>
+  ) : !session.isMember ? (
+    <div class="gate">
+      <h1>Pfotenclub Merchandise</h1>
+      <h3>Only for Pfotenclub Members!</h3>
+      <p>
+        You are currently logged in as <strong>{session.username}</strong>, however you are not a member of the Pfotenclub.
+      </p>
+    </div>
+  ) : (
+    <div class="shop">
+      <h1>Pfotenclub Merchandise</h1>
+      <h3>Welcome, {session.username}!</h3>
+      <p style="text-align: center;">
+        Browse our exclusive collection on the{' '}
+        <a href="https://cloud.pfotenclub.eu/s/EY7iHWnF4T9ayJT" target="_blank" rel="noopener noreferrer">Cloud Storage</a>,
+        then place your order below.
+      </p>
+
+      <form id="orderForm" class="order-card">
+
+        <!-- Step 1: Product -->
+        <div class="step">
+          <p class="step-label">Choose your product</p>
+          <div class="product-grid">
+            <button type="button" class="product-card" data-product="tshirt">
+              <span class="product-icon">👕</span>
+              <span class="product-name">T-Shirt</span>
+            </button>
+            <button type="button" class="product-card" data-product="hoodie">
+              <span class="product-icon">🥷🏼</span>
+              <span class="product-name">Hoodie</span>
+            </button>
+            <button type="button" class="product-card" data-product="zipper">
+              <span class="product-icon">🧥</span>
+              <span class="product-name">Zipper Hoodie</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Color + Size (revealed together) -->
+        <div class="step reveal" id="optionsStep">
+          <div class="two-col">
+            <div>
+              <p class="step-label">Color<span id="selectedColorName"></span></p>
+              <div class="color-row" id="colorRow"></div>
+              <input type="hidden" id="colorInput" name="color" />
+            </div>
+            <div id="sizeSection" hidden>
+              <p class="step-label">Size</p>
+              <div class="size-row" id="sizeRow"></div>
+              <input type="hidden" id="sizeInput" name="size" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Quantity + Notes + Submit -->
+        <div class="step reveal" id="detailsStep">
+          <div class="details-row">
+            <div>
+              <p class="step-label">Quantity</p>
+              <div class="qty-control">
+                <button type="button" id="qtyDown">−</button>
+                <input type="number" id="quantity" name="quantity" value="1" min="1" max="10" readonly />
+                <button type="button" id="qtyUp">+</button>
+              </div>
+            </div>
+            <div class="notes-col">
+              <p class="step-label">Notes <span class="optional">(optional)</span></p>
+              <textarea id="notes" name="notes" rows="2" placeholder="Special requests…"></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="step-label">Delivery Address</p>
+            <div class="address-grid">
+              <input type="text" name="firstName" placeholder="First Name" required class="addr-input" />
+              <input type="text" name="lastName"  placeholder="Last Name"  required class="addr-input" />
+              <input type="text" name="street"    placeholder="Street & Number" required class="addr-input addr-full" />
+              <input type="text" name="zip"       placeholder="ZIP Code"   required class="addr-input addr-zip" />
+              <input type="text" name="city"      placeholder="City"       required class="addr-input addr-city" />
+              <input type="text" name="country"   placeholder="Country"    required class="addr-input addr-full" />
+            </div>
+          </div>
+          <div class="price-row" id="priceRow" hidden>
+            <span class="price-summary" id="priceSummary"></span>
+            <span class="price-value" id="priceValue"></span>
+          </div>
+          <button type="submit" class="submit-btn">Place Order →</button>
+        </div>
+
+      </form>
+    </div>
+  )}
 </Layout>
 
-<style>
-    h1 {
-        text-align: center;
-        margin-top: 50px;
+<script>
+  const PRODUCTS: Record<string, {
+    basePrice: number;
+    sizePrices?: Record<string, number>;
+    colors: { label: string; hex: string; sizes: string[] }[];
+  }> = {
+    tshirt: {
+      basePrice: 15.50,
+      sizePrices: { 'XXL': 16.80 },
+      colors: [
+        { label: 'Black Heather',           hex: '#0B0B0B', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Navy',                    hex: '#212642', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Brown',                   hex: '#322622', sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Heather Midnight Navy',   hex: '#302D4B', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Maroon',                  hex: '#721D37', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Forest',                  hex: '#223E25', sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'True Royal',              hex: '#01408D', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+        { label: 'Dark Grey Heather',       hex: '#3E3C3D', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+      ],
+    },
+    hoodie: {
+      basePrice: 26.65,
+      sizePrices: { 'XXL': 27.95, 'XXXL': 29.25 },
+      colors: [
+        { label: 'Black',               hex: '#080808', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Navy Blazer',         hex: '#171F2C', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Maroon',              hex: '#7D263A', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Charcoal Heather',    hex: '#463E3D', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Vintage Black',       hex: '#43413D', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Team Royal',          hex: '#1B43AE', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Purple',              hex: '#623A7A', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Forest Green',        hex: '#335231', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Military Green',      hex: '#5C4F32', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Team Red',            hex: '#FF2D41', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Dusty Rose',          hex: '#D27E6F', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+      ],
+    },
+    zipper: {
+      basePrice: 27.90,
+      sizePrices: { 'XXL': 29.20, 'XXXL': 30.50, '4XL': 31.80, '5XL': 33.10 },
+      colors: [
+        { label: 'Black',           hex: '#0B0B0B', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL'] },
+        { label: 'Navy',            hex: '#15263C', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Dark Heather',    hex: '#3C3D44', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+        { label: 'Royal',           hex: '#1D57A5', sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+      ],
+    },
+  };
+
+  const colorRow          = document.getElementById('colorRow')!;
+  const colorInput        = document.getElementById('colorInput') as HTMLInputElement;
+  const selectedColorName = document.getElementById('selectedColorName')!;
+  const sizeRow           = document.getElementById('sizeRow')!;
+  const sizeInput         = document.getElementById('sizeInput') as HTMLInputElement;
+  const optionsStep       = document.getElementById('optionsStep')!;
+  const detailsStep       = document.getElementById('detailsStep')!;
+  const qtyInput          = document.getElementById('quantity') as HTMLInputElement;
+  const priceRow          = document.getElementById('priceRow')!;
+  const priceSummary      = document.getElementById('priceSummary')!;
+  const priceValue        = document.getElementById('priceValue')!;
+
+  let currentProductKey: string | null = null;
+  let currentColorData: typeof PRODUCTS[string]['colors'][number] | null = null;
+
+  function updatePrice() {
+    if (!currentProductKey || !currentColorData || !sizeInput.value) return;
+    const product = PRODUCTS[currentProductKey];
+    const unitPrice = product.sizePrices?.[sizeInput.value] ?? product.basePrice;
+    const qty = parseInt(qtyInput.value) || 1;
+    const total = unitPrice * qty;
+    const productName = document.querySelector('.product-card.active .product-name')?.textContent ?? '';
+    priceSummary.textContent = `${productName} · ${currentColorData.label} · ${sizeInput.value} × ${qty}`;
+    priceValue.textContent = `€${total.toFixed(2)}`;
+    priceRow.removeAttribute('hidden');
+  }
+
+  function checkShowDetails() {
+    if (colorInput.value && sizeInput.value) {
+      detailsStep.classList.add('visible');
+      updatePrice();
+    } else {
+      detailsStep.classList.remove('visible');
+      priceRow.setAttribute('hidden', '');
     }
+  }
+
+  const sizeSection = document.getElementById('sizeSection')!;
+
+  function buildSizes(sizes: string[]) {
+    sizeRow.innerHTML = '';
+    sizeInput.value = '';
+    detailsStep.classList.remove('visible');
+    sizeSection.removeAttribute('hidden');
+    sizes.forEach(size => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'size-chip';
+      btn.textContent = size;
+      btn.addEventListener('click', () => {
+        sizeRow.querySelectorAll('.size-chip').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        sizeInput.value = size;
+        checkShowDetails();
+      });
+      sizeRow.appendChild(btn);
+    });
+  }
+
+  function buildOptions(key: string) {
+    currentProductKey = key;
+    colorRow.innerHTML = '';
+    colorInput.value = '';
+    selectedColorName.textContent = '';
+    sizeRow.innerHTML = '';
+    sizeInput.value = '';
+    sizeSection.setAttribute('hidden', '');
+    currentColorData = null;
+    priceRow.setAttribute('hidden', '');
+
+    PRODUCTS[key].colors.forEach((colorData) => {
+      const { label, hex, sizes } = colorData;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch';
+      btn.style.background = hex;
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+      if (hex === '#eeeeee') btn.classList.add('light');
+      btn.addEventListener('click', () => {
+        colorRow.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        colorInput.value = label;
+        selectedColorName.textContent = ` — ${label}`;
+        currentColorData = colorData;
+        buildSizes(sizes);
+      });
+      colorRow.appendChild(btn);
+    });
+  }
+
+  // Product cards
+  document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.product-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const key = (card as HTMLElement).dataset.product!;
+      buildOptions(key);
+      optionsStep.classList.add('visible');
+      detailsStep.classList.remove('visible');
+    });
+  });
+
+  // Quantity
+  document.getElementById('qtyDown')?.addEventListener('click', () => {
+    if (parseInt(qtyInput.value) > 1) { qtyInput.value = String(parseInt(qtyInput.value) - 1); updatePrice(); }
+  });
+  document.getElementById('qtyUp')?.addEventListener('click', () => {
+    if (parseInt(qtyInput.value) < 10) { qtyInput.value = String(parseInt(qtyInput.value) + 1); updatePrice(); }
+  });
+
+  // Submit
+  document.getElementById('orderForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const submitBtn = form.querySelector('.submit-btn') as HTMLButtonElement;
+
+    const productName = document.querySelector('.product-card.active .product-name')?.textContent ?? '';
+    const qty         = parseInt(qtyInput.value) || 1;
+    const unitPrice   = currentColorData && currentProductKey
+      ? (PRODUCTS[currentProductKey].sizePrices?.[sizeInput.value] ?? PRODUCTS[currentProductKey].basePrice)
+      : 0;
+
+    const body = {
+      product:    productName,
+      color:      colorInput.value,
+      size:       sizeInput.value,
+      quantity:   qty,
+      unitPrice,
+      totalPrice: unitPrice * qty,
+      firstName:  (form.elements.namedItem('firstName') as HTMLInputElement).value,
+      lastName:   (form.elements.namedItem('lastName')  as HTMLInputElement).value,
+      street:     (form.elements.namedItem('street')    as HTMLInputElement).value,
+      zip:        (form.elements.namedItem('zip')       as HTMLInputElement).value,
+      city:       (form.elements.namedItem('city')      as HTMLInputElement).value,
+      country:    (form.elements.namedItem('country')   as HTMLInputElement).value,
+      notes:      (form.elements.namedItem('notes')     as HTMLTextAreaElement).value,
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    const res = await fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      form.innerHTML = `
+        <div class="order-success">
+          <div class="success-icon">✓</div>
+          <h2>Order received!</h2>
+          <p>Thanks ${body.firstName}, your order has been sent. We'll get back to you soon.</p>
+        </div>`;
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Place Order →';
+      alert('Something went wrong. Please try again.');
+    }
+  });
+</script>
+
+<style is:global>
+  .shop {
+    padding-bottom: 5rem;
+  }
+
+  .gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  /* ── Order card ── */
+  .order-card {
+    max-width: 620px;
+    margin: 2.5rem auto 0;
+    background: rgba(15, 22, 65, 0.55);
+    border: 1px solid rgba(100, 140, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
+
+  .step {
+    padding: 1.6rem 2rem;
+    border-bottom: 1px solid rgba(100, 140, 255, 0.08);
+  }
+
+  .step:last-child {
+    border-bottom: none;
+  }
+
+  /* Animated reveal */
+  .step.reveal {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .step.reveal.visible {
+    display: block;
+    animation: fadeUp 0.3s ease forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-label {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-secondary);
+    margin: 0 0 1rem;
+  }
+
+  /* ── Product cards ── */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .product-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 14px;
+    padding: 1.4rem 0.5rem 1.1rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    transition: background 0.2s, border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+    color: var(--color-secondary);
+  }
+
+  .product-card:hover {
+    background: rgba(88, 101, 242, 0.09);
+    border-color: rgba(100, 140, 255, 0.38);
+    transform: translateY(-3px);
+  }
+
+  .product-card.active {
+    background: rgba(88, 101, 242, 0.18);
+    border-color: #5865F2;
+    color: var(--color-primary);
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.22);
+    transform: translateY(-2px);
+  }
+
+  .product-icon { font-size: 2rem; line-height: 1; }
+
+  .product-name {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1rem;
+  }
+
+  /* ── Two-column layout for color + size ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  /* ── Color swatches ── */
+  .color-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .color-swatch {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+    /* larger invisible hit area */
+    padding: 0;
+    outline-offset: 3px;
+  }
+
+  .color-swatch::after {
+    content: attr(aria-label);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.85);
+    background: rgba(10, 15, 46, 0.95);
+    border: 1px solid rgba(100, 140, 255, 0.25);
+    color: var(--color-primary);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .color-swatch:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .color-swatch.light {
+    border-color: rgba(0, 0, 0, 0.25);
+  }
+
+  .color-swatch:hover {
+    transform: scale(1.18);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .color-swatch.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px #5865F2, 0 0 14px rgba(88, 101, 242, 0.5);
+    transform: scale(1.1);
+  }
+
+  /* ── Size chips ── */
+  .size-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .size-chip {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(15, 22, 65, 0.6);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 12px;
+    color: var(--color-secondary);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1rem;
+    padding: 0.6rem 1.3rem;
+    cursor: pointer;
+    min-width: 60px;
+    text-align: center;
+    backdrop-filter: blur(6px);
+    transition: background 0.18s, border-color 0.18s, color 0.18s,
+                box-shadow 0.18s, transform 0.15s;
+  }
+
+  .size-chip:hover {
+    background: rgba(88, 101, 242, 0.09);
+    border-color: rgba(100, 140, 255, 0.45);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+  }
+
+  .size-chip.active {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: #5865F2;
+    color: var(--color-primary);
+    box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.4), 0 4px 16px rgba(88, 101, 242, 0.25);
+    transform: translateY(-1px);
+  }
+
+  /* ── Details step ── */
+  .details-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 1.4rem;
+  }
+
+  .notes-col { display: flex; flex-direction: column; }
+
+  .form-group {
+    margin-top: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .address-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .addr-full { grid-column: 1 / -1; }
+  .addr-zip  { grid-column: 1; }
+  .addr-city { grid-column: 2; }
+
+  .addr-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 10px;
+    color: var(--color-primary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    padding: 0.6rem 0.85rem;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+
+  .addr-input:focus { border-color: rgba(100, 140, 255, 0.45); }
+  .addr-input::placeholder { color: rgba(157, 168, 212, 0.35); }
+
+  textarea {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 10px;
+    color: var(--color-primary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    padding: 0.6rem 0.85rem;
+    resize: none;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: rgba(100, 140, 255, 0.45); }
+  textarea::placeholder { color: rgba(157, 168, 212, 0.35); }
+
+  .optional {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.65;
+  }
+
+  /* ── Quantity ── */
+  .qty-control {
+    display: flex;
+    align-items: center;
+  }
+
+  .qty-control button {
+    width: 34px;
+    height: 34px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 140, 255, 0.2);
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+
+  .qty-control button:first-child { border-radius: 8px 0 0 8px; }
+  .qty-control button:last-child  { border-radius: 0 8px 8px 0; }
+  .qty-control button:hover { background: rgba(255, 255, 255, 0.11); }
+
+  .qty-control input {
+    width: 44px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(100, 140, 255, 0.2);
+    border-left: none;
+    border-right: none;
+    color: var(--color-primary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    height: 34px;
+    box-sizing: border-box;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  .qty-control input::-webkit-outer-spin-button,
+  .qty-control input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* ── Price row ── */
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(88, 101, 242, 0.1);
+    border: 1px solid rgba(88, 101, 242, 0.25);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    margin-top: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .price-summary {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    color: var(--color-secondary);
+  }
+
+  .price-value {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.3rem;
+    color: var(--color-primary);
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Submit ── */
+  .submit-btn {
+    background: linear-gradient(135deg, #5865F2 0%, #7c6cf6 100%);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.05rem;
+    padding: 0.7rem 2.2rem;
+    margin-top: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(88, 101, 242, 0.35);
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Order success ── */
+  .order-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    gap: 0.5rem;
+  }
+
+  .success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5865F2, #7c6cf6);
+    color: #fff;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 24px rgba(88, 101, 242, 0.45);
+    margin-bottom: 0.5rem;
+  }
+
+  .order-success h2 {
+    color: var(--color-primary);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .order-success p {
+    color: var(--color-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .submit-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(88, 101, 242, 0.45);
+  }
+
+  @media (max-width: 520px) {
+    .step { padding: 1.2rem 1.2rem; }
+    .two-col { grid-template-columns: 1fr; }
+    .details-row { grid-template-columns: 1fr; }
+    .product-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .product-card { padding: 1rem 0.3rem 0.8rem; }
+    .product-icon { font-size: 1.5rem; }
+  }
 </style>
