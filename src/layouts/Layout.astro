@@ -90,6 +90,18 @@ const { title } = Astro.props;
 		margin: 1rem auto;
 		max-width: 800px;
 	}
+
+	a {
+		color: #8a9ff0;
+		text-decoration: none;
+		border-bottom: 1px solid rgba(138, 159, 240, 0.35);
+		transition: color 0.2s, border-color 0.2s;
+	}
+
+	a:hover {
+		color: var(--color-primary);
+		border-bottom-color: rgba(232, 234, 240, 0.5);
+	}
 </style>
 
 <style is:global>
