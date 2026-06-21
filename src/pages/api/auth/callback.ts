@@ -12,11 +12,11 @@ export const GET: APIRoute = async ({ url, cookies }) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: import.meta.env.DISCORD_CLIENT_ID,
-      client_secret: import.meta.env.DISCORD_CLIENT_SECRET,
+      client_id: process.env.DISCORD_CLIENT_ID ?? '',
+      client_secret: process.env.DISCORD_CLIENT_SECRET ?? '',
       grant_type: 'authorization_code',
       code,
-      redirect_uri: import.meta.env.DISCORD_REDIRECT_URI,
+      redirect_uri: process.env.DISCORD_REDIRECT_URI ?? '',
     }),
   });
 
@@ -42,11 +42,11 @@ export const GET: APIRoute = async ({ url, cookies }) => {
   };
 
   const guilds: Array<{ id: string }> = guildsRes.ok ? await guildsRes.json() : [];
-  const isMember = guilds.some((g) => g.id === import.meta.env.DISCORD_GUILD_ID);
+  const isMember = guilds.some((g) => g.id === process.env.DISCORD_GUILD_ID);
 
   const sessionValue = createSessionCookie(
     { userId: user.id, username: user.username, avatar: user.avatar, isMember },
-    import.meta.env.SESSION_SECRET,
+    process.env.SESSION_SECRET ?? '',
   );
 
   cookies.set(SESSION_COOKIE, sessionValue, {

@@ -4,7 +4,7 @@ import { verifySessionCookie, SESSION_COOKIE } from "../lib/session";
 
 const sessionCookie = Astro.cookies.get(SESSION_COOKIE)?.value;
 const session = sessionCookie
-  ? verifySessionCookie(sessionCookie, import.meta.env.SESSION_SECRET ?? '')
+  ? verifySessionCookie(sessionCookie, process.env.SESSION_SECRET ?? '')
   : null;
 ---
 
