@@ -38,3 +38,9 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
             dist/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/pfotenclub/
+
+      - name: Restart server
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "pm2 restart pfotenclub --update-env 2>/dev/null || pm2 start /var/www/pfotenclub/server/entry.mjs --name pfotenclub --update-env"
