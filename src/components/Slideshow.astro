@@ -13,7 +13,7 @@ const { images, interval = 4000 } = Astro.props;
 <div class="slideshow" data-interval={interval}>
   {images.map((img, i) => (
     <div class={`slide${i === 0 ? ' active' : ''}`}>
-      <Image src={img.src} alt={img.alt} loading="eager" fetchpriority={i === 0 ? 'high' : 'low'} />
+      <Image src={img.src} alt={img.alt} width={1200} height={675} loading="eager" fetchpriority={i === 0 ? 'high' : 'low'} />
     </div>
   ))}
 
