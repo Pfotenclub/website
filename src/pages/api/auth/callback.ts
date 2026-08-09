@@ -24,11 +24,14 @@ export const GET: APIRoute = async ({ url, cookies }) => {
 
   const { access_token } = await tokenRes.json() as { access_token: string };
 
-  const [userRes, guildsRes] = await Promise.all([
+  const [userRes, guildsRes, memberRes] = await Promise.all([
     fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${access_token}` },
     }),
     fetch('https://discord.com/api/users/@me/guilds', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    }),
+    fetch(`https://discord.com/api/users/@me/guilds/${process.env.DISCORD_GUILD_ID}/member`, {
       headers: { Authorization: `Bearer ${access_token}` },
     }),
   ]);
@@ -44,8 +47,16 @@ export const GET: APIRoute = async ({ url, cookies }) => {
   const guilds: Array<{ id: string }> = guildsRes.ok ? await guildsRes.json() : [];
   const isMember = guilds.some((g) => g.id === process.env.DISCORD_GUILD_ID);
 
+  let member: { roles: string[] } | null = null;
+  if (memberRes.ok) {
+    member = await memberRes.json() as { roles: string[] };
+  } else {
+    console.error(`[auth] Guild-Member-Abfrage fehlgeschlagen (${memberRes.status}): ${await memberRes.text()}`);
+  }
+  const isBurgeramt = !!member?.roles.includes(process.env.DISCORD_BURGERAMT_ROLE_ID ?? '');
+
   const sessionValue = createSessionCookie(
-    { userId: user.id, username: user.username, avatar: user.avatar, isMember },
+    { userId: user.id, username: user.username, avatar: user.avatar, isMember, isBurgeramt },
     process.env.SESSION_SECRET ?? '',
   );
 

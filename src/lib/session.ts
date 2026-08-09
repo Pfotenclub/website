@@ -5,6 +5,7 @@ export interface SessionData {
   username: string;
   avatar: string | null;
   isMember: boolean;
+  isBurgeramt: boolean;
   exp: number;
 }
 

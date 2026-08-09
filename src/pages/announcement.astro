@@ -1,0 +1,671 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { verifySessionCookie, SESSION_COOKIE } from '../lib/session';
+
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE)?.value;
+const session = sessionCookie
+  ? verifySessionCookie(sessionCookie, process.env.SESSION_SECRET ?? '')
+  : null;
+---
+
+<Layout title='Announcement'>
+  {!session?.isBurgeramt ? (
+    <div class="gate">
+      <h1>Announcement</h1>
+      <h3>Only for the Burgeramt team!</h3>
+      <p>You do not have access to this page.</p>
+    </div>
+  ) : (
+    <div class="announcement">
+      <h1>Announcement</h1>
+      <h3>Send announcements via Fabaxi on the Discord Server!</h3>
+
+      <form id="announcementForm" class="announcement-card">
+        <div class="form-group">
+          <p class="step-label">Channel ID</p>
+          <input type="text" id="channelId" name="channelId" placeholder="z.B. 123456789012345678" inputmode="numeric" required class="text-input" />
+        </div>
+        <div class="form-group">
+          <p class="step-label">Message</p>
+          <textarea id="content" name="content" rows="6" maxlength="2000" placeholder="Your announcement..." required></textarea>
+        </div>
+        <div class="hint">
+            Formatting<br /><br />
+            # Big header<br />
+            ## Not so big header<br />
+            ### Smol header<br />
+            <i>*cursive*</i><br />
+            <b>**bold**</b><br />
+            <b><i>***cursive and bold***</i></b><br/>
+            - List<br />
+            - List<br />
+            <br />
+            To mention a user, use <code>&lt;@!12345678912345678&gt;</code> with their Discord user ID. <br />
+            To mention a role, use <code>&lt;@&12345679812346578&gt;</code> with the Discord role ID. <br />
+            To mention a channel, use <code>&lt;@#12345678912345678&gt;</code> with the Discord channel ID.<br /><br />
+            All ID's can be get by <i>right click - Copy ID</i> (Developer Mode must be active).
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="pollToggle" />
+            Also create a poll in this channel
+          </label>
+        </div>
+
+        <div class="poll-section" id="pollSection" hidden>
+          <div class="form-group">
+            <p class="step-label">Poll Question</p>
+            <input type="text" id="pollQuestion" maxlength="300" placeholder="z.B. Welche Farbe magst du?" class="text-input" />
+          </div>
+
+          <div class="form-group">
+            <p class="step-label">Answers</p>
+            <div id="pollAnswers" class="poll-answers"></div>
+            <button type="button" id="addAnswerBtn" class="add-answer-btn">+ Add answer</button>
+          </div>
+
+          <div class="two-col">
+            <div class="form-group">
+              <p class="step-label">Duration <span class="optional">(hours, optional)</span></p>
+              <input type="number" id="pollDuration" min="1" max="768" placeholder="24" class="text-input" />
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="pollMultiselect" />
+                Allow multiple answers
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Send Announcement →</button>
+      </form>
+
+      <div id="emojiPicker" class="emoji-picker" hidden>
+        <input type="text" id="emojiSearch" class="emoji-search" placeholder="Search emoji…" autocomplete="off" />
+        <div class="emoji-picker-grid"></div>
+        <button type="button" class="emoji-picker-clear">Remove emoji</button>
+      </div>
+    </div>
+  )}
+</Layout>
+
+<style is:global>
+  .gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  .announcement {
+    padding-bottom: 5rem;
+    text-align: center;
+  }
+
+  .announcement-card {
+    max-width: 620px;
+    margin: 2.5rem auto 0;
+    background: rgba(15, 22, 65, 0.55);
+    border: 1px solid rgba(100, 140, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(16px);
+    padding: 1.6rem 2rem;
+    text-align: left;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .hint {
+    font-size: 0.9rem;
+    color: var(--color-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .hint code {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+
+  .step-label {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-secondary);
+    margin: 0;
+  }
+
+  .text-input,
+  textarea {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 10px;
+    color: var(--color-primary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    padding: 0.6rem 0.85rem;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+
+  .text-input:focus,
+  textarea:focus {
+    border-color: rgba(100, 140, 255, 0.45);
+  }
+
+  .text-input::placeholder,
+  textarea::placeholder {
+    color: rgba(157, 168, 212, 0.35);
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #5865F2;
+    cursor: pointer;
+  }
+
+  .poll-section {
+    border-top: 1px solid rgba(100, 140, 255, 0.15);
+    padding-top: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .poll-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .poll-answer-row {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .poll-answer-text {
+    flex: 1;
+  }
+
+  .emoji-picker-btn {
+    width: 46px;
+    flex: none;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 10px;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 0.6rem 0;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.15s;
+  }
+
+  .emoji-picker-btn:hover {
+    background: rgba(88, 101, 242, 0.09);
+    border-color: rgba(100, 140, 255, 0.4);
+  }
+
+  .emoji-picker-btn.has-emoji {
+    border-color: rgba(100, 140, 255, 0.45);
+  }
+
+  .emoji-picker-btn:not(.has-emoji) {
+    color: rgba(157, 168, 212, 0.45);
+  }
+
+  .emoji-picker {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    width: 280px;
+    max-height: 320px;
+    display: flex;
+    flex-direction: column;
+    background: #131a3f;
+    border: 1px solid rgba(100, 140, 255, 0.25);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+
+  .emoji-search {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 8px;
+    color: var(--color-primary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    outline: none;
+    flex: none;
+    box-sizing: border-box;
+  }
+
+  .emoji-search:focus {
+    border-color: rgba(100, 140, 255, 0.45);
+  }
+
+  .emoji-search::placeholder {
+    color: rgba(157, 168, 212, 0.35);
+  }
+
+  .emoji-picker[hidden] {
+    display: none;
+  }
+
+  .emoji-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: min-content;
+    gap: 0.15rem;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .emoji-picker-option {
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0.4rem 0;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .emoji-picker-option:hover {
+    background: rgba(88, 101, 242, 0.18);
+  }
+
+  .emoji-picker-clear {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(100, 140, 255, 0.18);
+    border-radius: 8px;
+    color: var(--color-secondary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    padding: 0.4rem;
+    cursor: pointer;
+    flex: none;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .emoji-picker-clear:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-primary);
+  }
+
+  .remove-answer-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 140, 255, 0.2);
+    border-radius: 8px;
+    color: var(--color-secondary);
+    width: 38px;
+    flex: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .remove-answer-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.11);
+    color: var(--color-primary);
+  }
+
+  .remove-answer-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .add-answer-btn {
+    margin-top: 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(100, 140, 255, 0.3);
+    border-radius: 8px;
+    color: var(--color-secondary);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .add-answer-btn:hover:not(:disabled) {
+    background: rgba(88, 101, 242, 0.09);
+    color: var(--color-primary);
+  }
+
+  .add-answer-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: end;
+  }
+
+  .optional {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.65;
+  }
+
+  @media (max-width: 520px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #5865F2 0%, #7c6cf6 100%);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.05rem;
+    padding: 0.7rem 2.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(88, 101, 242, 0.35);
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .submit-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(88, 101, 242, 0.45);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .announcement-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 0;
+    gap: 0.5rem;
+  }
+
+  .success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5865F2, #7c6cf6);
+    color: #fff;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 24px rgba(88, 101, 242, 0.45);
+    margin-bottom: 0.5rem;
+  }
+
+  .announcement-success h2 {
+    color: var(--color-primary);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .announcement-success p {
+    color: var(--color-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+</style>
+
+<script>
+  const MAX_ANSWERS = 10;
+  const MIN_ANSWERS = 2;
+
+  const channelIdInput = document.getElementById('channelId') as HTMLInputElement;
+  channelIdInput?.addEventListener('input', () => {
+    channelIdInput.value = channelIdInput.value.replace(/\D/g, '');
+  });
+
+  const pollToggle = document.getElementById('pollToggle') as HTMLInputElement;
+  const pollSection = document.getElementById('pollSection') as HTMLElement;
+  const pollAnswers = document.getElementById('pollAnswers') as HTMLElement;
+  const addAnswerBtn = document.getElementById('addAnswerBtn') as HTMLButtonElement;
+
+  function updateAnswerControls() {
+    const rows = pollAnswers.querySelectorAll('.poll-answer-row');
+    addAnswerBtn.disabled = rows.length >= MAX_ANSWERS;
+    rows.forEach((row) => {
+      const removeBtn = row.querySelector('.remove-answer-btn') as HTMLButtonElement;
+      removeBtn.disabled = rows.length <= MIN_ANSWERS;
+    });
+  }
+
+  import orderedEmoji from 'unicode-emoji-json/data-ordered-emoji.json';
+  import emojiMeta from 'unicode-emoji-json/data-by-emoji.json';
+
+  const EMOJIS = (orderedEmoji as string[]).map((emoji) => ({
+    emoji,
+    name: (emojiMeta as Record<string, { name: string }>)[emoji].name,
+  }));
+
+  const emojiPicker = document.getElementById('emojiPicker') as HTMLElement;
+  const emojiSearch = document.getElementById('emojiSearch') as HTMLInputElement;
+  const emojiPickerGrid = emojiPicker.querySelector('.emoji-picker-grid') as HTMLElement;
+  const emojiPickerClear = emojiPicker.querySelector('.emoji-picker-clear') as HTMLButtonElement;
+  let activeEmojiBtn: HTMLButtonElement | null = null;
+
+  EMOJIS.forEach(({ emoji, name }) => {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'emoji-picker-option';
+    opt.textContent = emoji;
+    opt.title = name;
+    opt.dataset.name = name.toLowerCase();
+    opt.addEventListener('click', () => {
+      if (activeEmojiBtn) {
+        activeEmojiBtn.textContent = emoji;
+        activeEmojiBtn.dataset.emoji = emoji;
+        activeEmojiBtn.classList.add('has-emoji');
+      }
+      closeEmojiPicker();
+    });
+    emojiPickerGrid.appendChild(opt);
+  });
+
+  emojiSearch.addEventListener('input', () => {
+    const query = emojiSearch.value.trim().toLowerCase();
+    emojiPickerGrid.querySelectorAll<HTMLButtonElement>('.emoji-picker-option').forEach((opt) => {
+      opt.hidden = !!query && !opt.dataset.name?.includes(query);
+    });
+  });
+
+  emojiPickerClear.addEventListener('click', () => {
+    if (activeEmojiBtn) {
+      activeEmojiBtn.textContent = '＋';
+      delete activeEmojiBtn.dataset.emoji;
+      activeEmojiBtn.classList.remove('has-emoji');
+    }
+    closeEmojiPicker();
+  });
+
+  function openEmojiPicker(row: HTMLElement, btn: HTMLButtonElement) {
+    activeEmojiBtn = btn;
+    row.appendChild(emojiPicker);
+    emojiPicker.hidden = false;
+    emojiSearch.value = '';
+    emojiPickerGrid.querySelectorAll<HTMLButtonElement>('.emoji-picker-option').forEach((opt) => {
+      opt.hidden = false;
+    });
+    emojiSearch.focus();
+  }
+
+  function closeEmojiPicker() {
+    emojiPicker.hidden = true;
+    activeEmojiBtn = null;
+  }
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!emojiPicker.hidden && !emojiPicker.contains(target) && !target.closest('.emoji-picker-btn')) {
+      closeEmojiPicker();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeEmojiPicker();
+  });
+
+  function addAnswerRow() {
+    const row = document.createElement('div');
+    row.className = 'poll-answer-row';
+    row.innerHTML = `
+      <input type="text" class="text-input poll-answer-text" placeholder="Answer text" maxlength="55" />
+      <button type="button" class="emoji-picker-btn" aria-label="Choose emoji">＋</button>
+      <button type="button" class="remove-answer-btn" aria-label="Remove answer">✕</button>
+    `;
+    row.querySelector('.emoji-picker-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const btn = e.currentTarget as HTMLButtonElement;
+      if (activeEmojiBtn === btn) {
+        closeEmojiPicker();
+      } else {
+        openEmojiPicker(row, btn);
+      }
+    });
+    row.querySelector('.remove-answer-btn')?.addEventListener('click', () => {
+      if (pollAnswers.querySelectorAll('.poll-answer-row').length <= MIN_ANSWERS) return;
+      if (activeEmojiBtn && row.contains(activeEmojiBtn)) closeEmojiPicker();
+      row.remove();
+      updateAnswerControls();
+    });
+    pollAnswers.appendChild(row);
+    updateAnswerControls();
+  }
+
+  addAnswerBtn?.addEventListener('click', () => addAnswerRow());
+  addAnswerRow();
+  addAnswerRow();
+
+  pollToggle?.addEventListener('change', () => {
+    pollSection.hidden = !pollToggle.checked;
+  });
+
+  function collectAnswers(): Array<string | { text: string; emoji?: string }> {
+    return Array.from(pollAnswers.querySelectorAll('.poll-answer-row'))
+      .map((row) => {
+        const text = (row.querySelector('.poll-answer-text') as HTMLInputElement).value.trim();
+        const emoji = (row.querySelector('.emoji-picker-btn') as HTMLButtonElement).dataset.emoji;
+        if (!text) return null;
+        return emoji ? { text, emoji } : text;
+      })
+      .filter((a): a is string | { text: string; emoji?: string } => a !== null);
+  }
+
+  document.getElementById('announcementForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const submitBtn = form.querySelector('.submit-btn') as HTMLButtonElement;
+
+    const channelId = (form.elements.namedItem('channelId') as HTMLInputElement).value.trim();
+    const content = (form.elements.namedItem('content') as HTMLTextAreaElement).value.trim();
+
+    let pollPayload: Record<string, unknown> | null = null;
+    if (pollToggle.checked) {
+      const question = (document.getElementById('pollQuestion') as HTMLInputElement).value.trim();
+      const answers = collectAnswers();
+      if (!question) {
+        alert('Please enter a poll question.');
+        return;
+      }
+      if (answers.length < MIN_ANSWERS) {
+        alert(`Please provide at least ${MIN_ANSWERS} poll answers.`);
+        return;
+      }
+      const durationValue = (document.getElementById('pollDuration') as HTMLInputElement).value;
+      const allowMultiselect = (document.getElementById('pollMultiselect') as HTMLInputElement).checked;
+      pollPayload = {
+        channelId,
+        question,
+        answers,
+        ...(durationValue ? { duration: parseInt(durationValue, 10) } : {}),
+        ...(allowMultiselect ? { allowMultiselect } : {}),
+      };
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    const res = await fetch('/api/announcement', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channelId, content }),
+    });
+
+    if (!res.ok) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Announcement →';
+      const { error } = await res.json().catch(() => ({ error: null }));
+      alert(error ?? 'Something went wrong. Please try again.');
+      return;
+    }
+
+    if (pollPayload) {
+      submitBtn.textContent = 'Creating poll…';
+      const pollRes = await fetch('/api/poll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pollPayload),
+      });
+
+      if (!pollRes.ok) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Announcement →';
+        const { error } = await pollRes.json().catch(() => ({ error: null }));
+        alert(`Announcement was sent, but the poll failed: ${error ?? 'Something went wrong.'}`);
+        return;
+      }
+    }
+
+    form.innerHTML = `
+      <div class="announcement-success">
+        <div class="success-icon">✓</div>
+        <h2>Announcement sent!</h2>
+        <p>Your message${pollPayload ? ' and poll have' : ' has'} been posted to the channel.</p>
+      </div>`;
+  });
+</script>
