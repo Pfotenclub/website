@@ -26,7 +26,7 @@ const session = sessionCookie
           <input type="text" id="channelId" name="channelId" placeholder="z.B. 123456789012345678" inputmode="numeric" required class="text-input" />
         </div>
         <div class="form-group">
-          <p class="step-label">Message</p>
+          <p class="step-label">Message <span class="optional">(max. 2000 characters)</span></p>
           <textarea id="content" name="content" rows="6" maxlength="2000" placeholder="Your announcement..." required></textarea>
         </div>
         <div class="hint">
@@ -55,12 +55,12 @@ const session = sessionCookie
 
         <div class="poll-section" id="pollSection" hidden>
           <div class="form-group">
-            <p class="step-label">Poll Question</p>
-            <input type="text" id="pollQuestion" maxlength="300" placeholder="z.B. Welche Farbe magst du?" class="text-input" />
+            <p class="step-label">Poll Question <span class="optional">(max. 300 characters)</span></p>
+            <input type="text" id="pollQuestion" maxlength="300" placeholder="e.g. What is your favorite color?" class="text-input" />
           </div>
 
           <div class="form-group">
-            <p class="step-label">Answers</p>
+            <p class="step-label">Answers <span class="optional">(max. 55 characters each)</span></p>
             <div id="pollAnswers" class="poll-answers"></div>
             <button type="button" id="addAnswerBtn" class="add-answer-btn">+ Add answer</button>
           </div>
