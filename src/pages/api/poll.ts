@@ -54,9 +54,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (answers.length < 2 || answers.length > 10) {
     return new Response(JSON.stringify({ error: 'Poll needs between 2 and 10 answers' }), { status: 400 });
   }
-  const validAnswers = answers.every((a) =>
-    typeof a === 'string' ? a.trim().length > 0 : typeof a?.text === 'string' && a.text.trim().length > 0,
-  );
+  const validAnswers = answers.every((a) => {
+    const text = typeof a === 'string' ? a : a?.text;
+    return typeof text === 'string' && text.trim().length > 0 && text.trim().length <= 55;
+  });
   if (!validAnswers) {
     return new Response(JSON.stringify({ error: 'Invalid answers' }), { status: 400 });
   }
