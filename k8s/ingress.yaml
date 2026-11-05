@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pfotenclub-website
+  namespace: pfotenclub
+  labels:
+    app.kubernetes.io/name: pfotenclub-website
+spec:
+  # Falls dein Cluster eine spezifische IngressClass verlangt (z.B. "traefik" bei k3s oder "nginx"),
+  # wird standardmäßig die Default-IngressClass genutzt. Bei Bedarf einkommentieren:
+  # ingressClassName: traefik
+  rules:
+    - host: pfotenclub.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pfotenclub-website
+                port:
+                  name: http
+    - host: www.pfotenclub.eu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pfotenclub-website
+                port:
+                  name: http
+

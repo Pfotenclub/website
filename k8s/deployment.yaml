@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pfotenclub-website
+  namespace: pfotenclub
+  labels:
+    app.kubernetes.io/name: pfotenclub-website
+spec:
+  # Hochverfügbarkeit: 2 Pods gleichzeitig (Session-Cookies sind stateless)
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pfotenclub-website
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pfotenclub-website
+    spec:
+      # Falls das GHCR-Image privat ist, entferne das '#' vor den nächsten 2 Zeilen:
+      # imagePullSecrets:
+      #   - name: ghcr-pull-secret
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: pfotenclub-website
+      containers:
+        - name: website
+          image: ghcr.io/pfotenclub/website:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4321
+              protocol: TCP
+          # Zuerst Secret laden, danach ConfigMap (damit ConfigMap-Werte wie HOST/PORT
+          # oder FABAXI_API_URL im Cluster Vorrang vor einer lokalen .env haben)
+          envFrom:
+            - secretRef:
+                name: pfotenclub-website-secrets
+            - configMapRef:
+                name: pfotenclub-website-config
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
