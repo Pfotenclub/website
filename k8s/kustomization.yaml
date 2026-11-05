@@ -12,5 +12,5 @@ resources:
 
 images:
   - name: ghcr.io/pfotenclub/website
-    newTag: latest
+    newTag: "816855b"
 
